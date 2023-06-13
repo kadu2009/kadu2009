@@ -1,163 +1,251 @@
-ar path,boy,cash,diamonds,jwellery,sword;
-var pathImg,boyImg,cashImg,diamondsImg,jwelleryImg,swordImg;
-var treasureCollection = 0;
-var cashG,diamondsG,jwelleryG,swordGroup;
+var towerImg, tower;
+var doorImg, door, doorsGroup;
+var climberImg, climber, climbersGroup;
+var ghost, ghostImg;
+var invisibleBlockGroup, invisibleBlock;
+var gameState = "play";
 
-//Estados do jogo
-var PLAY=1;
-var END=0;
-var gameState=1;
-
-function preload(){
-  pathImg = loadImage("Road.png");
-  boyImg = loadAnimation("Runner-1.png","Runner-2.png");
-  cashImg = loadImage("cash.png");
-  diamondsImg = loadImage("diamonds.png");
-  jwelleryImg = loadImage("jwell.png");
-  swordImg = loadImage("sword.png");
-  gover = loadImage("gameOver.png");
-  //Remova os comentários corretos da linha de código para carregar a imagem gameOver.png
-
-  //gover=gameOver.png;
-
-  //gameOver.png=Load();
-
-  //gover = loadImage("gameOver.png");
+function preload()
+{
+  towerImg = loadImage("tower.png");
+  doorImg = loadImage("door.png");
+  climberImg = loadImage("climber.png");
+  ghostImg = loadImage("ghost-standing.png");
+  spookySound = loadSound("spooky.wav");
 }
 
-function setup(){
+function setup()
+{
+  createCanvas(600,600);
+  
+  tower = createSprite(300,300);
+  tower.addImage("tower",towerImg);
+  tower.velocityY = 1;
+  
+  doorsGroup = new Group();
+  climbersGroup = new Group();
+  invisibleBlockGroup = new Group();
+  
+  ghost = createSprite(200,200,50,50);
+  ghost.scale = 0.3;
+  ghost.addImage("ghost", ghostImg);
+}
 
-  createCanvas(400,600);
-// Movendo o fundo
+function draw()
+{
+  background(0);
+  
+  if (gameState === "play") 
+  {
+    spookySound.loop();
 
-path=createSprite(200,200);
-path.addImage(pathImg);
-path.velocityY = 4;
+    if(keyDown("left_arrow"))
+    {
+      ghost.x = ghost.x - 3;
+    }
+    
+    if(keyDown("right_arrow"))
+    {
+      ghost.x = ghost.x + 3;
+    }
+    
+    if(keyDown("space"))
+    {
+      ghost.velocityY = -10;
+    }
+    
+    ghost.velocityY = ghost.velocityY + 0.8;
+    
+    if(tower.y > 400)
+    {
+      tower.y = 300;
+    }
 
+    spawnDoors();
+    
+    if(climbersGroup.isTouching(ghost))
+    {
+      ghost.velocityY = 0;
+    }
 
-//criar menino correndo 
-boy = createSprite(70,580,20,20);
-boy.addAnimation("SahilRunning",boyImg);
-boy.scale=0.08;
+    if(invisibleBlockGroup.isTouching(ghost) || ghost.y > 600)
+    {
+      ghost.destroy();
+      gameState = "end";
+    }
+    
+    drawSprites();
+  }
+  
+  if (gameState === "end")
+  {
+    spookySound.stop();
 
-
-cashG=new Group();
-diamondsG=new Group();
-jwelleryG=new Group();
-swordGroup=new Group();
+    stroke("yellow");
+    fill("yellow");
+    textSize(30);
+    text("Fim de Jogo", 230,250);
+  }
 
 }
+
+function spawnDoors() 
+{
+  //código para gerar as portas na torre
+  if (frameCount % 240 === 0) 
+  {
+    var door = createSprite(200, -50);
+    var climber = createSprite(200,10);
+    var invisibleBlock = createSprite(200,15);
+
+    invisibleBlock.width = climber.width;
+    invisibleBlock.height = 2;
+    
+    door.x = Math.round(random(120,400));
+    climber.x = door.x;
+    invisibleBlock.x = door.x;
+    
+    door.addImage(doorImg);
+    climber.addImage(climberImg);
+    
+    door.velocityY = 1;
+    climber.velocityY = 1;
+    invisibleBlock.velocityY = 1;
+    
+    ghost.depth = door.depth;
+    ghost.depth +=1;
+   
+    //designa tempo de vida a variável
+    door.lifetime = 800;
+    climber.lifetime = 800;
+    invisibleBlock.lifetime = 800;
+    
+    //adiciona cada porta ao grupo
+    doorsGroup.add(door);
+    invisibleBlock.debug = true;
+    climbersGroup.add(climber);
+    invisibleBlockGroup.add(invisibleBlock);
+  }var helicopterIMG, helicopterSprite, packageSprite,packageIMG;
+var packageBody,ground
+const Engine = Matter.Engine;
+const World = Matter.World;
+const Bodies = Matter.Bodies;
+const Body = Matter.Body;
+
+function preload()
+{
+	helicopterIMG=loadImage("helicopter.png")
+	packageIMG=loadImage("package.png")
+}
+
+function setup() {
+	createCanvas(800, 700);
+	rectMode(CENTER);
+	
+
+	packageSprite=createSprite(width/2, 80, 10,10);
+	packageSprite.addImage(packageIMG)
+	packageSprite.scale=0.2
+
+	helicopterSprite=createSprite(width/2, 200, 10,10);
+	helicopterSprite.addImage(helicopterIMG)
+	helicopterSprite.scale=0.6
+
+	groundSprite=createSprite(width/2, height-35, width,10);
+	groundSprite.shapeColor=color(255)
+
+
+	engine = Engine.create();
+	world = engine.world;
+
+	packageBody = Bodies.circle(width/2 , 200 , 5 , {restitution:3, isStatic:true});
+	World.add(world, packageBody);
+	
+
+	//Create a Ground
+	ground = Bodies.rectangle(width/2, 650, width, 10 , {isStatic:true} );
+ 	World.add(world, ground);
+
+
+	Engine.run(engine);
+  
+}
+
 
 function draw() {
-
-  if(gameState===PLAY){
+  rectMode(CENTER);
   background(0);
-  boy.x = World.mouseX;
-
-  edges= createEdgeSprites();
-  boy.collide(edges);
-
-  //código para redefinir o fundo
-  if(path.y > 400 ){
-    path.y = height/2;
-  }
-
-    createCash();
-    createDiamonds();
-    createJwellery();
-    createSword();
-
-    if (cashG.isTouching(boy)) {
-      cashG.destroyEach();
-      treasureCollection=treasureCollection+50;
-    }
-    else if (diamondsG.isTouching(boy)) {
-      diamondsG.destroyEach();
-      treasureCollection=treasureCollection+100;
-
-    }else if(jwelleryG.isTouching(boy)) {
-      jwelleryG.destroyEach();
-      treasureCollection= treasureCollection + 150;
-
-    }else{
-      if(swordGroup.isTouching(boy)) {
-        gameState=END;
-
-
-        cashG.destroyEach();
-        diamondsG.destroyEach();
-        jwelleryG.destroyEach();
-        swordGroup.destroyEach();
-
-        cashG.setVelocityYEach(0);
-        diamondsG.setVelocityYEach(0);
-        jwelleryG.setVelocityYEach(0);
-        swordGroup.setVelocityYEach(0);
-        //Remova os comentários corretos da linha de código para exibir 'game over' (fim de jogo)
-
-        //  over = createSprite(880,9980,20,20);
-        //  over.addAnimation("gameover",gover);
-        //  over.scale=0.7
-
-        //  over = createSprite(180,280,20,20);
-        //  over.addAnimation("gameover",gover);
-        //  over.scale=0.7
-
-        //  over = createSprite(180,280,20,20);
-        //  over.addAnimation(gover);
-        //  over.scale=0.7
-
-    }
-  }
-
+  packageSprite.x= packageBody.position.x 
+  packageSprite.y= packageBody.position.y 
   drawSprites();
-  textSize(20);
-  fill(255);
-  text("Treasure: "+ treasureCollection,10,30);
+ 
+}
+
+function keyPressed() {
+ if (keyCode === DOWN_ARROW) {
+    // Look at the hints in the document and understand how to make the package body fall only on press of the Down arrow key.
+
+const Engine = Matter.Engine;
+const World = Matter.World;
+const Bodies = Matter.Bodies;
+const Body = Matter.Body;
+
+
+
+
+var ground, gameState,engine, world,dustbin,paper;
+function setup() {
+  createCanvas(800, 400);
+  rectMode(CENTER);
+
+  gameState = "start";
+
+  engine = Engine.create();
+  world = engine.world;
+  Engine.run(engine);
+
+  dustbin = new DustBin(680, 390, 190, 10);
+
+  paper = new Paper(100, 300, 10);
+
+  ground = Bodies.rectangle(width / 2, 400, width, 10,
+
+  {
+    isStatic: true
+  });
+  World.add(world, ground);
+}
+
+
+
+
+function draw() {
+  if (gameState === "start") {
+    background("black");
+    textSize(20);
+    fill("aqua");
+    text("Press UP ARROW to start the game & Press UP ARROW to toss the trash/paper", 50, 200)
+    if (keyCode === UP_ARROW) {
+      gameState = "play"
+    }
   }
+  if (gameState === "play") {
+    rectMode(CENTER);
+    background(0);
+    dustbin.display();
+    paper.display();
 
-}
-
-function createCash() {
-  if (World.frameCount % 200 == 0) {
-  var cash = createSprite(Math.round(random(50, 350),40, 10, 10));
-  cash.addImage(cashImg);
-  cash.scale=0.12;
-  cash.velocityY = 3;
-  cash.lifetime = 150;
-  cashG.add(cash);
   }
 }
 
-function createDiamonds() {
-  if (World.frameCount % 320 == 0) {
-  var diamonds = createSprite(Math.round(random(50, 350),40, 10, 10));
-  diamonds.addImage(diamondsImg);
-  diamonds.scale=0.03;
-  diamonds.velocityY = 3;
-  diamonds.lifetime = 150;
-  diamondsG.add(diamonds);
-}
-}
 
-function createJwellery() {
-  if (World.frameCount % 410 == 0) {
-  var jwellery = createSprite(Math.round(random(50, 350),40, 10, 10));
-  jwellery.addImage(jwelleryImg);
-  jwellery.scale=0.13;
-  jwellery.velocityY = 3;
-  jwellery.lifetime = 150;
-  jwelleryG.add(jwellery);
-  }
-}
 
-function createSword(){
-  if (World.frameCount % 530 == 0) {
-  var sword = createSprite(Math.round(random(50, 350),40, 10, 10));
-  sword.addImage(swordImg);
-  sword.scale=0.1;
-  sword.velocityY = 3;
-  sword.lifetime = 150;
-  swordGroup.add(sword);
+
+function keyPressed(){
+  if (keyCode === UP_ARROW && gameState === "play") {
+    Matter.Body.applyForce(paper.body, paper.body.position, {
+      x: 12,
+      y: -13
+    });
   }
 }
