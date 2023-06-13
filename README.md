@@ -1,5 +1,7 @@
+v
 ar path,boy,cash,diamonds,jwellery,sword;
-var pathImg,boyImg,cashImg,diamondsImg,jwelleryImg,swordImg;
+var pathImg,boyImg,cashImg,diamondsImg,jwelleryImg,swordImg
+;
 var treasureCollection = 0;
 var cashG,diamondsG,jwelleryG,swordGroup;
 
