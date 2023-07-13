@@ -1,69 +1,149 @@
+
+
 const Engine = Matter.Engine;
 const World = Matter.World;
 const Bodies = Matter.Bodies;
-const body = Matter.Body;
-const Render = Matter.Render;
 const Constraint = Matter.Constraint;
-var bob1,bob2,bob3, bob4,bob5, roofObject
-var rope1,rope2,rope3, rope4,rope5;
-var world;
 
+var engine, world;
+var canvas;
+var palyer, playerBase, playerArcher;
+var playerArrows = [];
+var board1, board2;
+var numberOfArrows = 10;
+
+var score = 0;
+
+function preload() {
+  backgroundImg = loadImage("./assets/background.png");
+}
 
 function setup() {
-	createCanvas(800, 600);
-	rectMode(CENTER);
+  canvas = createCanvas(windowWidth, windowHeight);
 
+  engine = Engine.create();
+  world = engine.world;
 
-	engine = Engine.create();
-	world = engine.world;
+  playerBase = new PlayerBase(300, 500, 180, 150);
+  player = new Player(285, playerBase.body.position.y - 153, 50, 180);
+  playerArcher = new PlayerArcher(
+    340,
+    playerBase.body.position.y - 180,
+    120,
+    120
+  );
 
-	roofObject=new roof(400,250,230,20);
-	bob1 = new bob(320,575,40)
-	bob2 = new bob(360,575,40)
-	bob3 = new bob(400,575,40)
-	bob4 = new bob(440,575,40)
-	bob5 = new bob(480,575,40)
-	
-	rope1=new rope(bob1.body,roofObject.body,-80)
-	rope2=new rope(bob2.body,roofObject.body,-40)
-	rope3=new rope(bob3.body,roofObject.body,0)
-	rope4=new rope(bob4.body,roofObject.body,40)
-	rope5=new rope(bob5.body,roofObject.body,80)
-	
-	Engine.run(engine);
-	
-  
+  board1 = new Board(width - 300, 330, 50, 200);
+  board2 = new Board(width - 550, height - 300, 50, 200);
 }
-
+//this.body = rectancler (x,y,widh,heigh,options); 
 function draw() {
-  rectMode(CENTER);
-  background(230);
-  roofObject.display();
+  background(backgroundImg);
 
-  rope1.display();
-  rope2.display();
-  rope3.display();
-  rope4.display();
-  rope5.display();
+  Engine.update(engine);
 
-  bob1.display();
-  bob2.display();
+  playerBase.display();
+  player.display();
+  playerArcher.display();
+
+  board1.display();
+  board2.display();
+
+  for (var i = 0; i < playerArrows.length; i++) {
+    if (playerArrows[i] !== undefined) {
+      playerArrows[i].display();
+
+      var board1Collision = Matter.SAT.collides(
+        board1.body,
+        playerArrows[i].body
+      );
+
+      var board2Collision = Matter.SAT.collides(
+        board2.body,
+        playerArrows[i].body
+      );
+
+      if (board1Collision.collided || board2Collision.collided) {
+        score += 5;
+      }
+
+      var posX = playerArrows[i].body.position.x;
+      var posY = playerArrows[i].body.position.y;
+
+      if (posX > width || posY > height) {
+        if (!playerArrows[i].isRemoved) {
+          playerArrows[i].remove(i);
+        } else {
+          playerArrows[i].trajectory = [];
+        }
+      }
+    }
+  }
+
+  // Título
+  fill("#FFFF");
+  textAlign("center");
+  textSize(40);
+  text("ARQUEIRO ÉPICO", width / 2, 100);
+
+  // Contagem de Flechas
+  fill("#FFFF");
+  textAlign("center");
+  textSize(30);
+  text("Flechas Restantes: " + numberOfArrows, 200, 100);
   
-  bob3.display();
-  bob4.display();
-  bob5.display();
+  // Pontuação
+  fill("#FFFF");
+  textAlign("center");
+  textSize(30);
+  text("Pontuação: " + score, width - 200, 100);
+
+  if (numberOfArrows == 0) {
+    gameOver();
+  }
+// player = player(240, playerbase.position.y -112,120,120)
 }
 
-//line(pointA.x, pointA.y + this.pointX, pointB.x, pointB.y,)
+function keyPressed() {
+  if (keyCode === 32) {
+    if (numberOfArrows > 0) {
+      var posX = playerArcher.body.position.x;
+      var posY = playerArcher.body.position.y;
+      var angle = playerArcher.body.angle;
 
-// function keyPressed() {
-// 	if (keyCode === DOWN_ARROW) {
-// 		Matter.Body.applyForce(bob1.body,bob1.body.position,{x:-50,y:-45});
-// 	}
-// }
+      var arrow = new PlayerArrow(posX, posY, 100, 10, angle);
 
+      arrow.trajectory = [];
+      Matter.Body.setAngle(arrow.body, angle);
+      playerArrows.push(arrow);
+      numberOfArrows -= 1;
+    }
+  }
+}
 
-
-
-
-
+function keyReleased() {
+  if (keyCode === 32) {
+    if (playerArrows.length) {
+      var angle = playerArcher.body.angle;
+      playerArrows[playerArrows.length - 1].shoot(angle);
+    }
+  }
+}
+//player.display();
+function gameOver() {
+  swal(
+    {
+      title: `Fim de Jogo!!!`,
+      text: "Obrigado por jogar!!",
+      imageUrl:
+        "https://raw.githubusercontent.com/vishalgaddam873/PiratesInvision/main/assets/board.png",
+      imageSize: "150x150",
+      confirmButtonText: "Jogar Novamente"
+    },
+    function(isConfirm) {
+      if (isConfirm) {
+        location.reload();
+      }
+    }
+  );
+} 
